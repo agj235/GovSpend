@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="GovSpend.Tests/GovSpend.Tests.csproj" />
+  <Project Path="GovSpend.Web/GovSpend.Web.csproj" />
+</Solution>

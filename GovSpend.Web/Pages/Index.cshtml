@@ -1,0 +1,319 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "GovSpend Dashboard";
+}
+
+<div class="container mt-4">
+    <h1>GovSpend Dashboard</h1>
+    <p>Federal Spending Intelligence System</p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert a;ert-warning" role="="alert">
+        @Model.ErrorMessage
+    </div>
+}
+
+<div class="row g-3 mb-4">
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class = "card-body">
+                <h5 class= "card-title">Total Federal Obligations</h5>
+
+                <h2 class= "text-primary">@Model.TotalFederalObligations.ToString("C0")</h2>
+
+                <p class="text-muted">Combined obligated amount from federal agencies</p>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    Total Federal Agencies
+                </h5>
+
+                <h2 class="text-primary">
+                    @Model.TotalFederalAgencies
+                </h2>
+
+                <p>
+                    Agencies returned by USAspending.gov
+                </p>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Top Agency Share</h5>
+
+                <h2 class="text-primary">@Model.TopAgencyShare.ToString("F2")%</h2>
+
+                <p class="text-muted">
+                    @Model.TopAgencyName accounts for 
+                    @Model.TopAgencyShare.ToString("F2")%
+                    of reported agency obligations.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Top 5 Federal Agencies by Obligations</h5>
+
+        <table class = "table table-striped">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Agency</th>
+                    <th>Obligated Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int rank = 1;
+                }
+
+                @foreach(var agency in Model.TopFiveAgencies)
+                {
+                    <tr>
+                        <td>@rank</td>
+                        <td><a asp-page="/AgencyDetails" asp-route-id="@agency.AgencyId">@agency.AgencyName</a></td>
+                        <td>@agency.ObligatedAmount.ToString("C0")</td>
+                    </tr>
+
+                    rank++;
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="card-title">
+            Top 5 Agency Spending Comparison 
+        </h5>
+
+        <canvas id="agencySpendingChart"></canvas>
+    </div>
+</div>
+
+<h2>Federal Agency Spending</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Agency</th>
+            <th>Total Spending</th>
+            <th>Contracts</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var agency in Model.Agencies)
+        {
+            <tr>
+                <td>@agency.Name</td>
+                <td>@agency.TotalSpending.ToString("C")</td>
+                <td>@agency.ContractCount</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<form method="get" class"mb-4">
+    <div class="input-group">
+        <input
+            type="text"
+            class="form-control"
+            placeholder="Search for an agency..."
+            name="SearchTerm"
+            value="@Model.SearchTerm" />
+
+            <button class="btn btn-primary" type="submit">Search</button>
+
+            <a asp-page="/Index" class="btn btn-secondary">Clear</a>
+    </div>
+
+</form>
+
+@if (Model.FederalAgencies.Count == 0)
+{
+    <p class = "text-danger">No federal agencies found.</p>
+}
+else
+{
+
+<h2>Federal Agencies - Live API Data</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Agency</th>
+            <th>Code</th>
+            <th>Fiscal Year</th>
+            <th>Obligated Amount</th>
+            @if (!Model.DemoMode)
+                {
+                    <th>Action</th>
+                }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var agency in Model.FederalAgencies)
+        {
+            <tr>
+                <td>
+                    <a asp-page="/AgencyDetails" asp-route-id="@agency.AgencyId">
+                        @agency.AgencyName
+                    </a>
+                </td>
+                <td>@agency.ToptierCode</td>
+                <td>@agency.ActiveFiscalYear</td>
+                <td>@agency.ObligatedAmount.ToString("C")</td>
+                <td>
+                    @if (!Model.DemoMode)
+                    {
+                    <form method="post" asp-page-handler="SaveAgency">
+                        <input type="hidden" name="agencyId" value="@agency.AgencyId" />
+                        <button type="submit" class="btn btn-success btn-sm">Save</button>
+                    </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+}
+
+@if (!Model.DemoMode){
+<h2>Saved Federal Agencies</h2>
+
+
+
+@if(Model.SavedAgencies.Count == 0)
+{
+    <p>No saved agencies.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Agency</th>
+                <th>Fiscal Year</th>
+                <th>Obligated Amount</th>
+                <th>Date Saved</th>
+                <th>Action </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var agency in Model.SavedAgencies)
+            {
+                <tr>
+                    <td>@agency.Name</td>
+                    <td>@agency.FiscalYear</td>
+                    <td>@agency.ObligatedAmount.ToString("C")</td>
+                    <td>@agency.SavedAt.ToString("MM/dd/yyyy")</td>
+
+                    <td>
+                        <form method="post" asp-page-handler="DeleteAgency">
+                            <input type="hidden" name="id" value="@agency.Id" />
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                        
+                    </td>
+                    <td>
+                        <form method="post" asp-page-handler="UpdateAgency" class="d-flex gap-2 mb-2">
+                            <input type="hidden" name="id" value="@agency.Id" />
+                            <input type="text"
+                                name="name"
+                                value="@agency.Name"
+                                class="form-control form-control-sm"
+                                required
+                                maxlength="200" />
+                            <button type="submit" class="btn btn-primary btn-sm">Update</button>
+
+
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+}
+
+@section Scripts{
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const agencyNames = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.TopFiveAgencies.Select(a => a.AgencyName)
+        )
+        );
+
+        const obligatedAmounts = @Html.Raw(
+            System.Text.Json.JsonSerializer.Serialize(
+                Model.TopFiveAgencies.Select(a => a.ObligatedAmount)
+            )
+        );
+
+        const ctx = document.getElementById("agencySpendingChart");
+
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: agencyNames,
+                datasets:[{
+                    label: "Obligated Amount ($)",
+                    data: obligatedAmounts,
+                    backgroundColor: "rgba(54, 162, 235, 0.7)"
+                }]
+            },
+            options:{
+                indexAxis: "y",
+                responsive: true,
+                plugins:{
+                    legend:{
+                        display: false
+                    },
+                    tooltip:{
+                        callbacks:{
+                            label: function(context){
+                                return new Intl.NumberFormat("en-US", {
+                                    style: "currency",
+                                    currency: "USD",
+                                    maximumFractionDigits: 0
+                                }).format(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales:{
+                    x:{
+                        ticks:{
+                            callback: function(value) {
+                                return new Intl.NumberFormat("en-US", {
+                                    notation: "compact",
+                                    maximumFractionDigits: 1
+                                }).format(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}

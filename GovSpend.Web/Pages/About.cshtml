@@ -1,0 +1,50 @@
+﻿@page
+@model MyApp.Namespace.AboutModel
+@{
+    ViewData["Title"] = "About GovSpend";
+}
+<div class="container mt-4">
+    <h1>About GovSpend</h1>
+
+    <p class="lead">
+        GovSpend is a federal spending intelligence 
+        application that allows users to explore 
+        government agency financial data. 
+    </p>
+
+    <hr />
+
+    <h3>Application Features</h3>
+
+    <ul>
+        <li>Real-time federal agency data from USAspending.gov</li>
+        <li>Federal spending analytics dashboard</li>
+        <li>Interactive spending charts</li>
+        <li>Agency search and financial details</li>
+        <li>Save, update, and delete agency records</li>
+    </ul>
+
+    <h3>Technology Stack</h3>
+
+    <ul>
+        <li>C# and ASP.NET Core Razor Pages</li>
+        <li>Entity Framework Core</li>
+        <li>SQL Server Express</li>
+        <li>USAspending.gov REST API</li>
+        <li>Chart.js</li>
+        <li>Bootstrap 5</li>
+    </ul>
+
+    <h3>
+        Data Source
+    </h3>
+
+    <p>
+        Federal agency financial information is retrieved
+        from the USAspending.gov API.
+        Figures reflect the reporting periods and data 
+        available through that source.
+    </p>
+
+    <a asp-page="/Index" class="btn btn-primary">Return to Dashboard</a>
+</div>

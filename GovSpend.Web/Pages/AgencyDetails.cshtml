@@ -1,0 +1,163 @@
+﻿@page "{id:int}"
+@model GovSpend.Web.Pages.AgencyDetailsModel
+
+
+
+<h1>@Model.Agency!.AgencyName</h1>
+
+<p>Federal Agency Spending Details</p>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5>Obligated Amount</h5>
+
+                <h3>@Model.Agency.ObligatedAmount.ToString("C0")</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5>Outlay Amount</h5>
+
+                <h3>@Model.Agency.OutlayAmount.ToString("C0")</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5>Budget Authority</h5>
+
+                <h3>@Model.Agency.BudgetAuthorityAmount.ToString("C0")</h3>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Budget Obligation Percentage</h5>
+
+        <h2 class="text-primary">
+            @Model.ObligationPercentage.ToString("F2")%
+        </h2>
+
+        <div class="progress" style="height: 20px;">
+            <div class="progress-bar"
+                 role="progressbar"
+                 style="width: @(Math.Clamp(Model.ObligationPercentage, 0m, 100m).ToString(System.Globalization.CultureInfo.InvariantCulture))%"
+                 aria-valuenow="@Math.Clamp(Model.ObligationPercentage, 0m, 100m)"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
+            </div>
+        </div>
+
+        <p class="text-muted mt-2">
+            Obligated amount as a percentage of reported budget authority.
+        </p>
+    </div>
+</div>
+
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body"">
+        <h5 class="card-title">Agency Budget Breakdown</h5>
+
+        <div style="max-width: 400px; margin:auto;">
+            <canvas id="agencyBudgetChart"></canvas>
+        </div>    
+    </div>
+</div>
+
+
+<div class="alert alert-info mb-4">
+    <strong>Reporting Fiscal Year:</strong>
+    @Model.Agency!.ActiveFiscalYear
+
+    <p class="mb-0 mt-2">
+        Financial figures reflect the reporting data
+        provided by USAspending.gov.
+    </p>
+</div>
+
+
+<a href="https://www.usaspending.gov/agency/@Model.Agency!.AgencySlug"
+   target="_blank"
+   rel="noopener noreferrer"
+   class="btn btn-outline-primary mb-3">
+    View on USAspending.gov
+</a>
+
+
+@if (TempData["Message"] is string message)
+{
+    <div class="alert alert-info">
+        @message
+    </div>
+}
+@if(!Model.DemoMode){
+<form method="post" asp-page-handler="Save"
+      asp-route-id="@Model.Agency!.AgencyId">
+
+    <button type="submit" class="btn btn-success">
+        Save Agency
+    </button>
+</form>
+}
+
+<a asp-page="/Index" class="btn btn-secondary">Back to Dashboard</a>
+
+@section Scripts{
+    <script src="https:cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const obligated = @Model.Agency!.ObligatedAmount;
+        const budgetAuthority = @Model.Agency.BudgetAuthorityAmount;
+
+        const remianing = Math.max(budgetAuthority - obligated, 0);
+
+        const ctx = document.getElementById("agencyBudgetChart");
+
+        new Chart(ctx, {
+            type: "doughnut",
+            data: {
+                labels: ["Obligated", "Remaining"],
+                datasets:[{
+                    data: [obligated, remianing],
+                    backgroundColor:[
+                        "#2563eb",
+                        "#e2e8f0"
+                        ]
+                }]
+            }, 
+            options:{
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const amount = new Intl.NumberFormat("en-US", {
+                                    style: "currency",
+                                    currency: "USD",
+                                    maximumFractionDigits: 0
+                                }).format(context.raw);
+
+                                return `${context.label}: ${amount}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}
